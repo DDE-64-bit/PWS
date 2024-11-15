@@ -1,103 +1,72 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import sqlite3
 
 app = Flask(__name__)
+DB_NAME = "nfc_database.db"
 
+# Functie om de database in te stellen
 def init_db():
-    conn = sqlite3.connect('nfc_data.db')
+    conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS nfc_tags (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             uid TEXT NOT NULL UNIQUE,
-            value INTEGER DEFAULT 0
+            geld REAL DEFAULT 10.0,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
     conn.commit()
     conn.close()
 
-@app.route('/receive_uid', methods=['POST'])
-def receive_uid():
+@app.route('/scan/<uid>', methods=['POST'])
+def scan_nfc(uid):
     try:
-        data = request.get_json()
-
-        if 'uid' in data:
-            uid = data['uid']
-            print(f"Received UID: {uid}")
-
-            conn = sqlite3.connect('nfc_data.db')
-            cursor = conn.cursor()
-            cursor.execute("SELECT value FROM nfc_tags WHERE uid = ?", (uid,))
-            row = cursor.fetchone()
-
-            if row:
-                value = row[0]
-                message = f"UID Bestaat met waarde: {value}"
-            else:
-                cursor.execute("INSERT INTO nfc_tags (uid, value) VALUES (?, ?)", (uid, 0))
-                conn.commit()
-                value = 0
-                message = "Nieuwe UID toegevoegd met standaart waarde 0" 
-
+        conn = sqlite3.connect(DB_NAME)
+        cursor = conn.cursor()
+        
+        # Controleer of het UID al bestaat
+        cursor.execute('SELECT id, uid, geld, timestamp FROM nfc_tags WHERE uid = ?', (uid,))
+        record = cursor.fetchone()
+        
+        if record:
+            # Retourneer gegevens als het UID al bestaat
             conn.close()
-            return jsonify({"status": "success", "uid_received": uid, "value": value, "message": message}), 200
-
+            return jsonify({
+                "id": record[0],
+                "uid": record[1],
+                "geld": record[2],
+                "timestamp": record[3],
+                "message": "UID already exists, data retrieved."
+            }), 200
         else:
-            return jsonify({"status": "error", "message": "No UID provided"}), 400
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/get_value', methods=['POST'])
-def get_value():
-    try:
-        data = request.get_json()
-        uid = data.get('uid')
-
-        if not uid:
-            return jsonify({"status": "error", "message": "No UID provided"}), 400
-
-        conn = sqlite3.connect('nfc_data.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT value FROM nfc_tags WHERE uid = ?", (uid,))
-        row = cursor.fetchone()
-        conn.close()
-
-        if row:
-            return jsonify({"status": "success", "uid": uid, "value": row[0]}), 200
-        else:
-            return jsonify({"status": "error", "message": "UID not found"}), 404
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/update_value', methods=['POST'])
-def update_value():
-    try:
-        data = request.get_json()
-        uid = data.get('uid')
-        amount = data.get('amount')
-
-        if not uid or amount is None:
-            return jsonify({"status": "error", "message": "UID and amount are required"}), 400
-
-        conn = sqlite3.connect('nfc_data.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT value FROM nfc_tags WHERE uid = ?", (uid,))
-        row = cursor.fetchone()
-
-        if row:
-            new_value = row[0] + amount
-            cursor.execute("UPDATE nfc_tags SET value = ? WHERE uid = ?", (new_value, uid))
+            # Voeg een nieuw record toe als het UID niet bestaat
+            cursor.execute('''
+                INSERT INTO nfc_tags (uid, geld)
+                VALUES (?, 10.0)
+            ''', (uid,))
             conn.commit()
             conn.close()
-            return jsonify({"status": "success", "uid": uid, "new_value": new_value}), 200
-        else:
-            conn.close()
-            return jsonify({"status": "error", "message": "UID not found"}), 404
-
+            return jsonify({
+                "message": f"UID {uid} saved successfully!",
+                "geld": 10.0
+            }), 201
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        # Foutafhandeling
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/uids', methods=['GET'])
+def get_uids():
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, uid, geld, timestamp FROM nfc_tags')
+    rows = cursor.fetchall()
+    conn.close()
+
+    return jsonify([
+        {"id": row[0], "uid": row[1], "geld": row[2], "timestamp": row[3]}
+        for row in rows
+    ])
 
 if __name__ == '__main__':
     init_db()
