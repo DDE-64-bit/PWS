@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFC Tags Overzicht</title>
+    <style>
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .aanwezig {
+            color: green;
+            font-weight: bold;
+        }
+
+        .afwezig {
+            color: red;
+            font-weight: bold;
+        }
+
+        .status {
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .status-aanwezig {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-afwezig {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔍 Aanwezigheid</h1>
+        <table>
+            <tr>
+                <th>Naam</th>
+                <th>Status</th>
+            </tr>
+            {% for tag in tags %}
+            <tr>
+                <td>{{ tag.name }}</td>
+                <td>
+                    <span class="status {% if tag.aanwezig %}status-aanwezig{% else %}status-afwezig{% endif %}">
+                        {% if tag.aanwezig %}✅ Aanwezig{% else %}❌ Afwezig{% endif %}
+                    </span>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        <br> 
+        <form action="https://hetstreek.magister.net">
+            <button type="submit">Login met Magister</button>
+        </form>
+        <br>
+        <a href="/adjust-balance" class="nav-button" target="_blank">Balans aanpassen</a>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance aanpassen</title>
+    
+    <!-- Voeg wat basis-stijlen toe voor een betere layout -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .form-container label {
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            display: block;
+            color: #555;
+        }
+
+        .form-container input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        .slider-container {
+            margin-bottom: 20px;
+        }
+
+        .slider {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .slider-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .nav-button {
+            background-color: #008CBA;
+            margin-top: 20px;
+            width: 100%;
+            font-size: 1.1em;
+        }
+
+        .nav-button:hover {
+            background-color: #007B9F;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Balance aanpassen van een NFC-tag</h1>
+
+        <div class="form-container">
+            <form method="post">
+                {% csrf_token %}
+                <label for="name">Zoek naar de naam:</label>
+                <input type="text" id="name" name="name" required placeholder="Naam van de NFC-tag">
+                <button type="submit">Zoek</button>
+            </form>
+        </div>
+
+        {% if form.instance %}
+        <div class="form-container">
+            <h3>Wijzig de balans voor "{{ form.instance.name }}"</h3>
+
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="name" value="{{ form.instance.name }}">
+                
+                <!-- Slider voor de balans -->
+                <div class="slider-container">
+                    <label for="balance">Balans:</label>
+                    <input type="range" id="balance" name="balance" class="slider" min="0" max="100" step="0.01" value="{{ form.instance.balance }}">
+                    <div class="slider-value" id="slider-value">{{ form.instance.balance }}</div>
+                </div>
+                
+                <button type="submit">Opslaan</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <!-- Knop naar de hoofdpagina -->
+         <br> <br>
+        <a href="/" class="nav-button">Terug naar de hoofdpagina</a>
+    </div>
+
+    <script>
+        // Javascript om de waarde van de slider bij te werken
+        const slider = document.getElementById("balance");
+        const sliderValue = document.getElementById("slider-value");
+
+        slider.oninput = function() {
+            sliderValue.textContent = slider.value;
+        };
+    </script>
+
+</body>
+</html>
